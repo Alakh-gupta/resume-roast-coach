@@ -140,20 +140,8 @@ function Index() {
               </span>{" "}
               in 30 seconds.
             </h1>
-            <p className="mt-6 max-w-xl text-muted-foreground text-lg">
-              Paste it in. Pick a mode. Get a savage stand-up roast of your bullet points — or a
-              Fortune-500 rewrite with strong verbs and implied metrics.
-            </p>
           </div>
-          <div className="lg:col-span-4 lg:text-right">
-            <blockquote
-              className="font-display italic text-2xl leading-snug border-l-2 pl-5 lg:border-l-0 lg:border-r-2 lg:pl-0 lg:pr-5"
-              style={{ borderColor: accent }}
-            >
-              "Oh, you 'did stuff' with Excel? What, did you color the cells green and call it a financial model?"
-            </blockquote>
-            <p className="text-xs text-muted-foreground mt-3">— actual sample output</p>
-          </div>
+          <div className="lg:col-span-4" />
         </div>
       </section>
 
