@@ -83,14 +83,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "resume roaster" },
+      { name: "description", content: "Resume Roast & Rise offers dual-mode career assistance: hilariously critique resumes or provide professional optimization." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "resume roaster" },
+      { property: "og:description", content: "Resume Roast & Rise offers dual-mode career assistance: hilariously critique resumes or provide professional optimization." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "resume roaster" },
+      { name: "twitter:description", content: "Resume Roast & Rise offers dual-mode career assistance: hilariously critique resumes or provide professional optimization." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c83f4e67-3c76-4ca4-a078-c8c1c124817b/id-preview-85e7b873--ad47ea22-ffb4-4407-b501-14ccff4e02c9.lovable.app-1780908010557.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c83f4e67-3c76-4ca4-a078-c8c1c124817b/id-preview-85e7b873--ad47ea22-ffb4-4407-b501-14ccff4e02c9.lovable.app-1780908010557.png" },
     ],
     links: [
       {
