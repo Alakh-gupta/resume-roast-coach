@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { analyzeResume } from "@/lib/resume.functions";
+import { extractResumeText } from "@/lib/extract.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,12 +37,56 @@ const SAMPLE = `Experience:
 function Index() {
   const [mode, setMode] = useState<Mode>("roast");
   const [resume, setResume] = useState("");
+  const [uploadedName, setUploadedName] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
   const analyze = useServerFn(analyzeResume);
+  const extract = useServerFn(extractResumeText);
 
   const mutation = useMutation({
     mutationFn: (input: { resume: string; mode: Mode }) =>
       analyze({ data: input }),
   });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const buf = await file.arrayBuffer();
+      // chunked base64 to avoid stack overflow on large files
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      }
+      const base64 = btoa(binary);
+      return extract({ data: { filename: file.name, base64 } });
+    },
+    onSuccess: (res, file) => {
+      if (res.ok) {
+        setResume(res.text);
+        setUploadedName(file.name);
+        setUploadError(null);
+      } else {
+        setUploadError(res.error);
+        setUploadedName(null);
+      }
+    },
+    onError: (err) => {
+      setUploadError(err instanceof Error ? err.message : "Upload failed.");
+      setUploadedName(null);
+    },
+  });
+
+  const handleFile = (file: File | null | undefined) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File is over 10MB. Please upload a smaller resume.");
+      return;
+    }
+    setUploadError(null);
+    uploadMutation.mutate(file);
+  };
 
   const result = mutation.data && "ok" in mutation.data && mutation.data.ok ? mutation.data : null;
   const error =
@@ -139,6 +184,77 @@ function Index() {
               Load sample resume
             </button>
           </div>
+
+          {/* Upload dropzone */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              handleFile(e.dataTransfer.files?.[0]);
+            }}
+            className="mb-4 rounded-xl border-2 border-dashed p-4 transition flex flex-wrap items-center justify-between gap-3"
+            style={{
+              borderColor: dragOver ? accent : "var(--border)",
+              background: dragOver ? "var(--accent-soft)" : "transparent",
+            }}
+          >
+            <div className="flex items-center gap-3 text-sm">
+              <span
+                className="grid place-items-center h-9 w-9 rounded-lg"
+                style={{ background: "var(--accent-soft)", color: accent }}
+              >
+                {uploadMutation.isPending ? "…" : "📄"}
+              </span>
+              <div>
+                <div className="font-medium">
+                  {uploadMutation.isPending
+                    ? "Reading your resume…"
+                    : uploadedName
+                      ? `Loaded: ${uploadedName}`
+                      : "Drop a PDF or DOCX here, or"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  PDF, DOCX, or TXT · up to 10MB · text is extracted on the server
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadMutation.isPending}
+              className="text-sm font-medium rounded-full px-4 py-2 border transition hover:bg-[var(--accent-soft)] disabled:opacity-50"
+              style={{ borderColor: "var(--border)" }}
+            >
+              {uploadedName ? "Replace file" : "Choose file"}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+              className="hidden"
+              onChange={(e) => {
+                handleFile(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          {uploadError && (
+            <div
+              className="mb-4 rounded-lg border px-4 py-3 text-sm"
+              style={{
+                borderColor: "var(--ember)",
+                background: "oklch(0.64 0.22 32 / 0.08)",
+              }}
+            >
+              {uploadError}
+            </div>
+          )}
 
           <label className="block">
             <span className="sr-only">Paste your resume</span>
