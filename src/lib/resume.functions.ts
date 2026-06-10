@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 
-import { getGeminiModel } from "./ai-gateway.server";
+import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
 const InputSchema = z.object({
   resume: z.string().trim().min(20).max(15000),
@@ -49,7 +49,11 @@ OUTPUT:
 export const analyzeResume = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
-    const model = getGeminiModel();
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+
+    const gateway = createLovableAiGatewayProvider(key);
+    const model = gateway("google/gemini-3-flash-preview");
 
     const system = data.mode === "roast" ? ROAST_SYSTEM : OPTIMIZE_SYSTEM;
 
