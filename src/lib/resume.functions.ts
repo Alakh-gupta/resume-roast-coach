@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { getGeminiModel } from "./ai-gateway.server";
 
 const InputSchema = z.object({
   resume: z.string().trim().min(20).max(15000),
@@ -38,7 +38,7 @@ const OPTIMIZE_SYSTEM = `Act as a Fortune 500 recruiter and resume coach.
 
 Rewrite each resume bullet point to:
 - Lead with a strong action verb (Led, Architected, Drove, Reduced, Shipped, Negotiated, etc.).
-- Imply or include measurable metrics (%, $, time saved, scale, headcount). If the original lacks numbers, insert realistic placeholder metrics in [brackets] like "[X%]" so the user can fill them in.
+- Imply or include measurable metrics (%, $, time saved, scale, headcount). If the original lacks numbers, insert realistic placeholder metrics in [brackets] like "[X%]" so the user can fill them [...]
 - Be concise (1-2 lines), specific, and accomplishment-oriented (not duty-oriented).
 - Use the XYZ formula where possible: "Accomplished X, as measured by Y, by doing Z."
 
@@ -49,11 +49,7 @@ OUTPUT:
 export const analyzeResume = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
-    const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-3-flash-preview");
+    const model = getGeminiModel();
 
     const system = data.mode === "roast" ? ROAST_SYSTEM : OPTIMIZE_SYSTEM;
 
@@ -71,7 +67,7 @@ export const analyzeResume = createServerFn({ method: "POST" })
         return { ok: false as const, error: "Rate limit hit. Please wait a moment and try again." };
       }
       if (message.includes("402")) {
-        return { ok: false as const, error: "AI credits exhausted. Add credits to your Lovable workspace." };
+        return { ok: false as const, error: "AI credits exhausted. Add credits to your workspace." };
       }
       return { ok: false as const, error: message };
     }
